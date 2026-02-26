@@ -10,7 +10,7 @@ def save_checkpoint(model, optimizer, epoch, path):
         "optimizer": optimizer.state_dict()
     }, path)
 
-
+import re
 def load_latest_checkpoint(model, optimizer, checkpoint_dir):
     if not os.path.exists(checkpoint_dir):
         return 0
@@ -19,11 +19,14 @@ def load_latest_checkpoint(model, optimizer, checkpoint_dir):
     if not files:
         return 0
 
-    files.sort()
+    def epoch_num(fname):
+        m = re.search(r'(\d+)', fname)
+        return int(m.group(1)) if m else -1
+    files.sort(key=epoch_num)
     latest = files[-1]
     path = os.path.join(checkpoint_dir, latest)
 
-    checkpoint = torch.load(path)
+    checkpoint = torch.load(path, weights_only=False)
     model.load_state_dict(checkpoint["model"])
     optimizer.load_state_dict(checkpoint["optimizer"])
 

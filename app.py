@@ -21,13 +21,18 @@ model = build_model(config).to(device)
 
 # Load latest checkpoint
 checkpoint_dir = "checkpoints"
+import re
 files = [f for f in os.listdir(checkpoint_dir) if f.endswith(".pth")]
 if files:
-    files.sort()
-    latest = os.path.join(checkpoint_dir, files[-1])
-    checkpoint = torch.load(latest, map_location=device)
+    def epoch_num(fname):
+        m = re.search(r'(\d+)', fname)
+        return int(m.group(1)) if m else -1
+    files.sort(key=epoch_num)
+    latest = files[0]
+    path = os.path.join(checkpoint_dir, latest)
+    checkpoint = torch.load(path, map_location=device, weights_only=False)
     model.load_state_dict(checkpoint["model"])
-    print(f"Loaded checkpoint: {files[-1]}")
+    print(f"Loaded checkpoint: {latest}")
 else:
     print("WARNING: No checkpoint found. Model has random weights.")
 
