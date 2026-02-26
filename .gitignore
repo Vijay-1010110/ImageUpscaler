@@ -5,6 +5,7 @@ web/uploads/
 
 # Checkpoints & Model Weights
 checkpoints/
+checkpoints_archive/
 *.pth
 *.pt
 

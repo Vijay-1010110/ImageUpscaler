@@ -2,6 +2,7 @@ import torch
 from torch.cuda.amp import autocast, GradScaler
 from tqdm import tqdm
 from utils.metrics import psnr
+from utils.system_monitor import get_system_metrics
 
 
 class Trainer:
@@ -40,6 +41,12 @@ class Trainer:
             if self.writer:
                 global_step = epoch * len(loader) + step
                 self.writer.add_scalar("Loss/step", loss.item(), global_step)
+
+                # Log system metrics every 10 steps
+                if step % 10 == 0:
+                    sys_metrics = get_system_metrics()
+                    for key, val in sys_metrics.items():
+                        self.writer.add_scalar(key, val, global_step)
 
         avg_loss = total_loss / len(loader)
         avg_psnr = total_psnr / len(loader)
