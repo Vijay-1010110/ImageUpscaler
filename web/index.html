@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,7 +22,6 @@
             --success: #00e676;
             --danger: #ff5252;
             --gradient-1: linear-gradient(135deg, #6c5ce7, #a29bfe);
-            --gradient-2: linear-gradient(135deg, #0a0a0f 0%, #1a1a28 100%);
         }
 
         * {
@@ -38,18 +38,13 @@
             overflow-x: hidden;
         }
 
-        /* Background glow effects */
         body::before {
             content: '';
             position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
+            inset: 0;
             background: radial-gradient(ellipse at 30% 20%, rgba(108, 92, 231, 0.06) 0%, transparent 50%),
-                        radial-gradient(ellipse at 70% 80%, rgba(162, 155, 254, 0.04) 0%, transparent 50%);
+                radial-gradient(ellipse at 70% 80%, rgba(162, 155, 254, 0.04) 0%, transparent 50%);
             pointer-events: none;
-            z-index: 0;
         }
 
         /* Header */
@@ -101,7 +96,6 @@
             font-weight: 500;
         }
 
-        /* Main Container */
         .container {
             position: relative;
             z-index: 1;
@@ -111,10 +105,6 @@
         }
 
         /* Drop Zone */
-        .dropzone-wrapper {
-            margin-bottom: 32px;
-        }
-
         .dropzone {
             position: relative;
             border: 2px dashed var(--border);
@@ -124,7 +114,7 @@
             cursor: pointer;
             transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             background: var(--bg-secondary);
-            overflow: hidden;
+            margin-bottom: 32px;
         }
 
         .dropzone::before {
@@ -137,12 +127,14 @@
             border-radius: 18px;
         }
 
-        .dropzone:hover, .dropzone.drag-over {
+        .dropzone:hover,
+        .dropzone.drag-over {
             border-color: var(--accent);
             box-shadow: 0 0 40px var(--accent-glow);
         }
 
-        .dropzone:hover::before, .dropzone.drag-over::before {
+        .dropzone:hover::before,
+        .dropzone.drag-over::before {
             opacity: 0.05;
         }
 
@@ -155,12 +147,6 @@
             font-size: 56px;
             margin-bottom: 16px;
             display: block;
-            filter: grayscale(0.3);
-            transition: filter 0.3s;
-        }
-
-        .dropzone:hover .dropzone-icon {
-            filter: grayscale(0);
         }
 
         .dropzone-title {
@@ -180,12 +166,11 @@
             cursor: pointer;
         }
 
-        /* Hidden file input */
         #fileInput {
             display: none;
         }
 
-        /* Processing State */
+        /* Processing */
         .processing {
             display: none;
             text-align: center;
@@ -207,7 +192,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .processing-text {
@@ -215,7 +202,7 @@
             color: var(--text-secondary);
         }
 
-        /* Controls Bar */
+        /* Controls */
         .controls-bar {
             display: none;
             align-items: center;
@@ -225,6 +212,8 @@
             background: var(--bg-card);
             border-radius: 14px;
             border: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
         .controls-bar.active {
@@ -256,6 +245,7 @@
         .control-btns {
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -299,38 +289,100 @@
         /* Compare Container */
         .compare-container {
             display: none;
+            position: relative;
             border-radius: 16px;
             overflow: hidden;
             border: 1px solid var(--border);
-            background: var(--bg-card);
+            background: #000;
+            height: 70vh;
+            min-height: 450px;
         }
 
         .compare-container.active {
             display: block;
         }
 
-        /* Side by Side Mode */
-        .side-by-side {
+        /* === SIDE BY SIDE === */
+        .sbs-view {
             display: flex;
-            height: 70vh;
-            min-height: 450px;
+            width: 100%;
+            height: 100%;
         }
 
-        .side-by-side .pane {
+        .sbs-pane {
             flex: 1;
             position: relative;
             overflow: hidden;
             cursor: grab;
         }
 
-        .side-by-side .pane:active {
+        .sbs-pane:active {
             cursor: grabbing;
         }
 
-        .side-by-side .pane:first-child {
-            border-right: 1px solid var(--border);
+        .sbs-pane+.sbs-pane {
+            border-left: 1px solid var(--border);
         }
 
+        .sbs-pane canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* === SLIDER VIEW === */
+        .slider-view {
+            display: none;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+            overflow: hidden;
+        }
+
+        .slider-view:active {
+            cursor: grabbing;
+        }
+
+        .slider-view canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .slider-handle {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 3px;
+            background: #fff;
+            z-index: 5;
+            cursor: ew-resize;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+            transform: translateX(-50%);
+        }
+
+        .slider-handle::after {
+            content: '⟨ ⟩';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-size: 14px;
+            font-weight: 700;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Labels */
         .pane-label {
             position: absolute;
             top: 14px;
@@ -359,90 +411,6 @@
             color: #69f0ae;
         }
 
-        .pane img {
-            position: absolute;
-            transform-origin: 0 0;
-            image-rendering: auto;
-            user-select: none;
-            -webkit-user-drag: none;
-        }
-
-        /* Slider Mode */
-        .slider-mode {
-            display: none;
-            position: relative;
-            height: 70vh;
-            min-height: 450px;
-            overflow: hidden;
-            cursor: grab;
-        }
-
-        .slider-mode:active {
-            cursor: grabbing;
-        }
-
-        .slider-mode .slider-img-wrapper {
-            position: absolute;
-            inset: 0;
-        }
-
-        .slider-mode img {
-            position: absolute;
-            transform-origin: 0 0;
-            user-select: none;
-            -webkit-user-drag: none;
-        }
-
-        .slider-mode .original-wrapper {
-            z-index: 1;
-            clip-path: inset(0 50% 0 0);
-        }
-
-        .slider-mode .upscaled-wrapper {
-            z-index: 0;
-        }
-
-        .slider-handle {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 50%;
-            width: 3px;
-            background: #fff;
-            z-index: 5;
-            cursor: ew-resize;
-            box-shadow: 0 0 12px rgba(0,0,0,0.5);
-        }
-
-        .slider-handle::after {
-            content: '⟨ ⟩';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 40px;
-            height: 40px;
-            background: #fff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #000;
-            font-size: 14px;
-            font-weight: 700;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.4);
-        }
-
-        .slider-mode .pane-label.original {
-            left: 14px;
-            z-index: 3;
-        }
-
-        .slider-mode .pane-label.upscaled {
-            right: 14px;
-            z-index: 3;
-        }
-
         /* Zoom indicator */
         .zoom-indicator {
             position: absolute;
@@ -459,21 +427,10 @@
             font-weight: 600;
             color: var(--text-secondary);
             pointer-events: none;
+            opacity: 0;
             transition: opacity 0.3s;
         }
 
-        /* Download Button */
-        .download-section {
-            display: none;
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .download-section.active {
-            display: block;
-        }
-
-        /* Footer */
         .footer {
             text-align: center;
             padding: 32px;
@@ -481,17 +438,22 @@
             font-size: 13px;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
-            .container { padding: 16px; }
-            .side-by-side { flex-direction: column; height: auto; }
-            .side-by-side .pane { height: 40vh; }
-            .side-by-side .pane:first-child { border-right: none; border-bottom: 1px solid var(--border); }
-            .controls-bar { flex-direction: column; gap: 12px; }
-            .header { padding: 12px 16px; }
+            .container {
+                padding: 16px;
+            }
+
+            .controls-bar {
+                flex-direction: column;
+            }
+
+            .header {
+                padding: 12px 16px;
+            }
         }
     </style>
 </head>
+
 <body>
 
     <header class="header">
@@ -504,69 +466,61 @@
 
     <div class="container">
 
-        <!-- Drop Zone -->
-        <div class="dropzone-wrapper" id="dropzoneWrapper">
+        <div id="dropzoneWrapper">
             <div class="dropzone" id="dropzone">
                 <div class="dropzone-content">
                     <span class="dropzone-icon">📸</span>
                     <div class="dropzone-title">Drop your image here</div>
-                    <div class="dropzone-subtitle">or <span onclick="document.getElementById('fileInput').click()">browse files</span> — PNG, JPG, WEBP</div>
+                    <div class="dropzone-subtitle">or <span
+                            onclick="document.getElementById('fileInput').click()">browse files</span> — PNG, JPG, WEBP
+                    </div>
                 </div>
             </div>
             <input type="file" id="fileInput" accept="image/*">
         </div>
 
-        <!-- Processing -->
         <div class="processing" id="processing">
             <div class="spinner"></div>
             <div class="processing-text">Upscaling your image with AI...</div>
         </div>
 
-        <!-- Controls -->
         <div class="controls-bar" id="controlsBar">
             <div class="info-pills" id="infoPills"></div>
             <div class="control-btns">
-                <button class="btn active" id="btnSideBySide" onclick="setMode('sidebyside')">◧ Side by Side</button>
+                <button class="btn active" id="btnSbs" onclick="setMode('sbs')">◧ Side by Side</button>
                 <button class="btn" id="btnSlider" onclick="setMode('slider')">⇔ Slider</button>
-                <button class="btn" id="btnResetZoom" onclick="resetZoom()">⊕ Reset Zoom</button>
+                <button class="btn" id="btnResetZoom" onclick="resetView()">⊕ Reset Zoom</button>
                 <button class="btn btn-primary" id="btnDownload" onclick="downloadResult()">↓ Download</button>
                 <button class="btn" onclick="uploadNew()">+ New</button>
             </div>
         </div>
 
-        <!-- Compare Container -->
         <div class="compare-container" id="compareContainer">
 
-            <!-- Side by Side -->
-            <div class="side-by-side" id="sideBySide">
-                <div class="pane" id="paneLeft">
+            <!-- Side by Side: two canvases -->
+            <div class="sbs-view" id="sbsView">
+                <div class="sbs-pane" id="paneLeft">
                     <span class="pane-label original">Original</span>
-                    <img id="imgOriginalSbs" draggable="false">
+                    <canvas id="canvasLeft"></canvas>
                 </div>
-                <div class="pane" id="paneRight">
+                <div class="sbs-pane" id="paneRight">
                     <span class="pane-label upscaled">Upscaled</span>
-                    <img id="imgUpscaledSbs" draggable="false">
+                    <canvas id="canvasRight"></canvas>
                 </div>
             </div>
 
-            <!-- Slider -->
-            <div class="slider-mode" id="sliderMode">
+            <!-- Slider: two canvases overlaid -->
+            <div class="slider-view" id="sliderView">
                 <span class="pane-label original">Original</span>
                 <span class="pane-label upscaled">Upscaled</span>
-                <div class="slider-img-wrapper original-wrapper" id="originalWrapper">
-                    <img id="imgOriginalSlider" draggable="false">
-                </div>
-                <div class="slider-img-wrapper upscaled-wrapper" id="upscaledWrapper">
-                    <img id="imgUpscaledSlider" draggable="false">
-                </div>
+                <canvas id="canvasSliderBg"></canvas>
+                <canvas id="canvasSliderFg"></canvas>
                 <div class="slider-handle" id="sliderHandle"></div>
             </div>
 
             <div class="zoom-indicator" id="zoomIndicator">100%</div>
         </div>
 
-        <!-- Download -->
-        <div class="download-section" id="downloadSection"></div>
     </div>
 
     <footer class="footer">
@@ -574,301 +528,391 @@
     </footer>
 
     <script>
-        // State
-        let state = {
-            mode: 'sidebyside',
-            zoom: 1,
-            panX: 0,
-            panY: 0,
-            isPanning: false,
-            startX: 0,
-            startY: 0,
-            originalUrl: '',
-            upscaledUrl: '',
-            minZoom: 0.1,
-            maxZoom: 20
-        };
+        (function () {
+            // ─── State ───
+            const S = {
+                mode: 'sbs',             // 'sbs' or 'slider'
+                imgOriginal: null,       // Image objects
+                imgUpscaled: null,
+                refW: 0,                 // Reference dimensions (upscaled image size)
+                refH: 0,
+                zoom: 1,
+                panX: 0,
+                panY: 0,
+                isPanning: false,
+                panStartX: 0,
+                panStartY: 0,
+                sliderPos: 0.5,          // 0..1
+                isSliding: false,
+                upscaledUrl: '',
+                zoomTimer: null,
+            };
 
-        // DOM
-        const dropzone = document.getElementById('dropzone');
-        const fileInput = document.getElementById('fileInput');
-        const processing = document.getElementById('processing');
-        const dropzoneWrapper = document.getElementById('dropzoneWrapper');
-        const controlsBar = document.getElementById('controlsBar');
-        const compareContainer = document.getElementById('compareContainer');
-        const sideBySide = document.getElementById('sideBySide');
-        const sliderMode = document.getElementById('sliderMode');
-        const zoomIndicator = document.getElementById('zoomIndicator');
+            // ─── DOM refs ───
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('fileInput');
+            const dropzoneWrapper = document.getElementById('dropzoneWrapper');
+            const processing = document.getElementById('processing');
+            const controlsBar = document.getElementById('controlsBar');
+            const compareContainer = document.getElementById('compareContainer');
+            const sbsView = document.getElementById('sbsView');
+            const sliderView = document.getElementById('sliderView');
+            const zoomIndicator = document.getElementById('zoomIndicator');
+            const sliderHandle = document.getElementById('sliderHandle');
 
-        // Drag & Drop
-        ['dragenter', 'dragover'].forEach(e => {
-            dropzone.addEventListener(e, (ev) => {
-                ev.preventDefault();
-                dropzone.classList.add('drag-over');
+            const canvasLeft = document.getElementById('canvasLeft');
+            const canvasRight = document.getElementById('canvasRight');
+            const canvasSliderBg = document.getElementById('canvasSliderBg');
+            const canvasSliderFg = document.getElementById('canvasSliderFg');
+            const ctxLeft = canvasLeft.getContext('2d');
+            const ctxRight = canvasRight.getContext('2d');
+            const ctxBg = canvasSliderBg.getContext('2d');
+            const ctxFg = canvasSliderFg.getContext('2d');
+
+            // ─── Drag & Drop ───
+            ['dragenter', 'dragover'].forEach(e =>
+                dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.add('drag-over'); })
+            );
+            ['dragleave', 'drop'].forEach(e =>
+                dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.remove('drag-over'); })
+            );
+            dropzone.addEventListener('drop', e => {
+                const f = e.dataTransfer.files[0];
+                if (f && f.type.startsWith('image/')) uploadImage(f);
             });
-        });
+            dropzone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', e => { if (e.target.files[0]) uploadImage(e.target.files[0]); });
 
-        ['dragleave', 'drop'].forEach(e => {
-            dropzone.addEventListener(e, (ev) => {
-                ev.preventDefault();
-                dropzone.classList.remove('drag-over');
-            });
-        });
+            // ─── Upload ───
+            async function uploadImage(file) {
+                dropzoneWrapper.style.display = 'none';
+                processing.classList.add('active');
 
-        dropzone.addEventListener('drop', (e) => {
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
-                uploadImage(file);
-            }
-        });
+                const formData = new FormData();
+                formData.append('image', file);
 
-        dropzone.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files[0]) uploadImage(e.target.files[0]);
-        });
+                try {
+                    const res = await fetch('/upscale', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.error) { alert(data.error); uploadNew(); return; }
 
-        // Upload & Process
-        async function uploadImage(file) {
-            dropzoneWrapper.style.display = 'none';
-            processing.classList.add('active');
+                    S.upscaledUrl = data.upscaled;
 
-            const formData = new FormData();
-            formData.append('image', file);
+                    // Load both images
+                    const [imgOrig, imgUp] = await Promise.all([
+                        loadImage(data.original),
+                        loadImage(data.upscaled)
+                    ]);
 
-            try {
-                const res = await fetch('/upscale', { method: 'POST', body: formData });
-                const data = await res.json();
+                    S.imgOriginal = imgOrig;
+                    S.imgUpscaled = imgUp;
 
-                if (data.error) {
-                    alert(data.error);
-                    uploadNew();
-                    return;
-                }
+                    // Use the upscaled image dimensions as the reference
+                    // Both images will be drawn at this size
+                    S.refW = imgUp.naturalWidth;
+                    S.refH = imgUp.naturalHeight;
 
-                state.originalUrl = data.original;
-                state.upscaledUrl = data.upscaled;
-
-                // Set images
-                document.getElementById('imgOriginalSbs').src = data.original;
-                document.getElementById('imgUpscaledSbs').src = data.upscaled;
-                document.getElementById('imgOriginalSlider').src = data.original;
-                document.getElementById('imgUpscaledSlider').src = data.upscaled;
-
-                // Info pills
-                document.getElementById('infoPills').innerHTML = `
+                    document.getElementById('infoPills').innerHTML = `
                     <div class="pill">Input: ${data.original_size}</div>
                     <div class="pill success">Output: ${data.upscaled_size}</div>
                     <div class="pill">${data.scale}x Upscale</div>
                 `;
 
-                // Wait for images to load
-                await Promise.all([
-                    loadImg('imgOriginalSbs'),
-                    loadImg('imgUpscaledSbs'),
-                    loadImg('imgOriginalSlider'),
-                    loadImg('imgUpscaledSlider')
-                ]);
+                    processing.classList.remove('active');
+                    controlsBar.classList.add('active');
+                    compareContainer.classList.add('active');
 
+                    setMode('sbs');
+
+                } catch (err) {
+                    alert('Error: ' + err.message);
+                    uploadNew();
+                }
+            }
+
+            function loadImage(src) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = src;
+                });
+            }
+
+            window.uploadNew = function () {
                 processing.classList.remove('active');
-                controlsBar.classList.add('active');
-                compareContainer.classList.add('active');
+                dropzoneWrapper.style.display = 'block';
+                controlsBar.classList.remove('active');
+                compareContainer.classList.remove('active');
+                fileInput.value = '';
+            };
 
-                resetZoom();
-                setMode('sidebyside');
+            // ─── View mode ───
+            window.setMode = function (mode) {
+                S.mode = mode;
+                document.getElementById('btnSbs').classList.toggle('active', mode === 'sbs');
+                document.getElementById('btnSlider').classList.toggle('active', mode === 'slider');
+                sbsView.style.display = mode === 'sbs' ? 'flex' : 'none';
+                sliderView.style.display = mode === 'slider' ? 'block' : 'none';
+                resetView();
+            };
 
-            } catch (err) {
-                alert('Error processing image: ' + err.message);
-                uploadNew();
+            // ─── Reset view to fit ───
+            window.resetView = function () {
+                if (!S.imgUpscaled) return;
+
+                let cw, ch;
+                if (S.mode === 'sbs') {
+                    // Each pane is half the container
+                    cw = compareContainer.clientWidth / 2;
+                    ch = compareContainer.clientHeight;
+                } else {
+                    cw = compareContainer.clientWidth;
+                    ch = compareContainer.clientHeight;
+                }
+
+                // Fit the reference image into the container
+                S.zoom = Math.min(cw / S.refW, ch / S.refH, 1);
+                S.panX = (cw - S.refW * S.zoom) / 2;
+                S.panY = (ch - S.refH * S.zoom) / 2;
+                S.sliderPos = 0.5;
+                sliderHandle.style.left = '50%';
+
+                render();
+                showZoom();
+            };
+
+            // ─── Render ───
+            function render() {
+                if (S.mode === 'sbs') renderSbs();
+                else renderSlider();
             }
-        }
 
-        function loadImg(id) {
-            return new Promise((resolve) => {
-                const img = document.getElementById(id);
-                if (img.complete) resolve();
-                else img.onload = resolve;
+            function renderSbs() {
+                const paneW = compareContainer.clientWidth / 2;
+                const paneH = compareContainer.clientHeight;
+                const dpr = window.devicePixelRatio || 1;
+
+                // Size canvases to pane
+                [canvasLeft, canvasRight].forEach(c => {
+                    c.width = paneW * dpr;
+                    c.height = paneH * dpr;
+                    c.style.width = paneW + 'px';
+                    c.style.height = paneH + 'px';
+                });
+
+                // Draw original (stretched to refW x refH so it visually matches the upscaled)
+                ctxLeft.setTransform(dpr, 0, 0, dpr, 0, 0);
+                ctxLeft.clearRect(0, 0, paneW, paneH);
+                ctxLeft.imageSmoothingEnabled = true;
+                ctxLeft.imageSmoothingQuality = 'high';
+                ctxLeft.drawImage(
+                    S.imgOriginal,
+                    S.panX, S.panY,
+                    S.refW * S.zoom, S.refH * S.zoom
+                );
+
+                // Draw upscaled (at its natural size)
+                ctxRight.setTransform(dpr, 0, 0, dpr, 0, 0);
+                ctxRight.clearRect(0, 0, paneW, paneH);
+                ctxRight.imageSmoothingEnabled = false;
+                ctxRight.drawImage(
+                    S.imgUpscaled,
+                    S.panX, S.panY,
+                    S.refW * S.zoom, S.refH * S.zoom
+                );
+            }
+
+            function renderSlider() {
+                const cw = compareContainer.clientWidth;
+                const ch = compareContainer.clientHeight;
+                const dpr = window.devicePixelRatio || 1;
+                const splitX = Math.round(S.sliderPos * cw);
+
+                [canvasSliderBg, canvasSliderFg].forEach(c => {
+                    c.width = cw * dpr;
+                    c.height = ch * dpr;
+                    c.style.width = cw + 'px';
+                    c.style.height = ch + 'px';
+                });
+
+                // Background: upscaled (full area)
+                ctxBg.setTransform(dpr, 0, 0, dpr, 0, 0);
+                ctxBg.clearRect(0, 0, cw, ch);
+                ctxBg.imageSmoothingEnabled = false;
+                ctxBg.drawImage(
+                    S.imgUpscaled,
+                    S.panX, S.panY,
+                    S.refW * S.zoom, S.refH * S.zoom
+                );
+
+                // Foreground: original (clipped to left of slider)
+                ctxFg.setTransform(dpr, 0, 0, dpr, 0, 0);
+                ctxFg.clearRect(0, 0, cw, ch);
+                ctxFg.save();
+                ctxFg.beginPath();
+                ctxFg.rect(0, 0, splitX, ch);
+                ctxFg.clip();
+                ctxFg.imageSmoothingEnabled = true;
+                ctxFg.imageSmoothingQuality = 'high';
+                ctxFg.drawImage(
+                    S.imgOriginal,
+                    S.panX, S.panY,
+                    S.refW * S.zoom, S.refH * S.zoom
+                );
+                ctxFg.restore();
+
+                sliderHandle.style.left = splitX + 'px';
+            }
+
+            function showZoom() {
+                zoomIndicator.textContent = Math.round(S.zoom * 100) + '%';
+                zoomIndicator.style.opacity = '1';
+                clearTimeout(S.zoomTimer);
+                S.zoomTimer = setTimeout(() => zoomIndicator.style.opacity = '0', 1500);
+            }
+
+            // ─── Wheel zoom (centered on cursor) ───
+            compareContainer.addEventListener('wheel', e => {
+                e.preventDefault();
+                if (!S.imgUpscaled) return;
+
+                const rect = getActiveRect();
+                const mx = e.clientX - rect.left;
+                const my = e.clientY - rect.top;
+
+                // Image coords under cursor
+                const imgX = (mx - S.panX) / S.zoom;
+                const imgY = (my - S.panY) / S.zoom;
+
+                const factor = e.deltaY > 0 ? 0.9 : 1.1;
+                S.zoom = clamp(S.zoom * factor, 0.1, 30);
+
+                // Adjust pan so the point under cursor stays fixed
+                S.panX = mx - imgX * S.zoom;
+                S.panY = my - imgY * S.zoom;
+
+                render();
+                showZoom();
+            }, { passive: false });
+
+            // ─── Pan ───
+            compareContainer.addEventListener('mousedown', e => {
+                if (e.target === sliderHandle || e.target.parentElement === sliderHandle) return;
+                // Check if near slider line in slider mode
+                if (S.mode === 'slider') {
+                    const rect = compareContainer.getBoundingClientRect();
+                    const mx = e.clientX - rect.left;
+                    const splitX = S.sliderPos * rect.width;
+                    if (Math.abs(mx - splitX) < 20) {
+                        S.isSliding = true;
+                        e.preventDefault();
+                        return;
+                    }
+                }
+                S.isPanning = true;
+                S.panStartX = e.clientX - S.panX;
+                S.panStartY = e.clientY - S.panY;
+                e.preventDefault();
             });
-        }
 
-        function uploadNew() {
-            processing.classList.remove('active');
-            dropzoneWrapper.style.display = 'block';
-            controlsBar.classList.remove('active');
-            compareContainer.classList.remove('active');
-            fileInput.value = '';
-            resetZoom();
-        }
+            window.addEventListener('mousemove', e => {
+                if (S.isSliding) {
+                    const rect = compareContainer.getBoundingClientRect();
+                    S.sliderPos = clamp((e.clientX - rect.left) / rect.width, 0, 1);
+                    render();
+                    return;
+                }
+                if (!S.isPanning) return;
+                S.panX = e.clientX - S.panStartX;
+                S.panY = e.clientY - S.panStartY;
+                render();
+            });
 
-        // View Modes
-        function setMode(mode) {
-            state.mode = mode;
+            window.addEventListener('mouseup', () => {
+                S.isPanning = false;
+                S.isSliding = false;
+            });
 
-            document.getElementById('btnSideBySide').classList.toggle('active', mode === 'sidebyside');
-            document.getElementById('btnSlider').classList.toggle('active', mode === 'slider');
+            // Slider handle drag
+            sliderHandle.addEventListener('mousedown', e => {
+                S.isSliding = true;
+                e.preventDefault();
+                e.stopPropagation();
+            });
 
-            sideBySide.style.display = mode === 'sidebyside' ? 'flex' : 'none';
-            sliderMode.style.display = mode === 'slider' ? 'block' : 'none';
+            // ─── Touch support ───
+            let lastTouchDist = 0;
 
-            resetZoom();
-        }
+            compareContainer.addEventListener('touchstart', e => {
+                if (e.touches.length === 1) {
+                    S.isPanning = true;
+                    S.panStartX = e.touches[0].clientX - S.panX;
+                    S.panStartY = e.touches[0].clientY - S.panY;
+                } else if (e.touches.length === 2) {
+                    S.isPanning = false;
+                    lastTouchDist = getTouchDist(e.touches);
+                }
+            }, { passive: false });
 
-        // Zoom & Pan
-        function applyTransform() {
-            const transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
-            const imgs = document.querySelectorAll('.pane img, .slider-mode img');
-            imgs.forEach(img => img.style.transform = transform);
+            compareContainer.addEventListener('touchmove', e => {
+                e.preventDefault();
+                if (e.touches.length === 1 && S.isPanning) {
+                    S.panX = e.touches[0].clientX - S.panStartX;
+                    S.panY = e.touches[0].clientY - S.panStartY;
+                    render();
+                } else if (e.touches.length === 2) {
+                    const dist = getTouchDist(e.touches);
+                    const factor = dist / lastTouchDist;
+                    S.zoom = clamp(S.zoom * factor, 0.1, 30);
+                    lastTouchDist = dist;
+                    render();
+                    showZoom();
+                }
+            }, { passive: false });
 
-            const pct = Math.round(state.zoom * 100);
-            zoomIndicator.textContent = `${pct}%`;
-            zoomIndicator.style.opacity = 1;
-            clearTimeout(state.zoomFadeTimer);
-            state.zoomFadeTimer = setTimeout(() => {
-                zoomIndicator.style.opacity = 0;
-            }, 1500);
-        }
+            compareContainer.addEventListener('touchend', () => { S.isPanning = false; });
 
-        function resetZoom() {
-            const container = state.mode === 'sidebyside'
-                ? document.getElementById('paneLeft')
-                : sliderMode;
-
-            const img = state.mode === 'sidebyside'
-                ? document.getElementById('imgUpscaledSbs')
-                : document.getElementById('imgUpscaledSlider');
-
-            if (!img.naturalWidth) {
-                state.zoom = 1;
-                state.panX = 0;
-                state.panY = 0;
-                applyTransform();
-                return;
+            function getTouchDist(touches) {
+                const dx = touches[0].clientX - touches[1].clientX;
+                const dy = touches[0].clientY - touches[1].clientY;
+                return Math.sqrt(dx * dx + dy * dy);
             }
 
-            const cw = container.clientWidth;
-            const ch = container.clientHeight;
-            const iw = img.naturalWidth;
-            const ih = img.naturalHeight;
-
-            state.zoom = Math.min(cw / iw, ch / ih, 1);
-            state.panX = (cw - iw * state.zoom) / 2;
-            state.panY = (ch - ih * state.zoom) / 2;
-
-            applyTransform();
-        }
-
-        // Mouse wheel zoom
-        compareContainer.addEventListener('wheel', (e) => {
-            e.preventDefault();
-
-            const rect = compareContainer.getBoundingClientRect();
-            const mx = e.clientX - rect.left;
-            const my = e.clientY - rect.top;
-
-            const imgX = (mx - state.panX) / state.zoom;
-            const imgY = (my - state.panY) / state.zoom;
-
-            const delta = e.deltaY > 0 ? 0.9 : 1.1;
-            let newZoom = state.zoom * delta;
-            newZoom = Math.max(state.minZoom, Math.min(state.maxZoom, newZoom));
-
-            state.panX = mx - imgX * newZoom;
-            state.panY = my - imgY * newZoom;
-            state.zoom = newZoom;
-
-            applyTransform();
-        }, { passive: false });
-
-        // Pan (mouse)
-        compareContainer.addEventListener('mousedown', (e) => {
-            if (e.target.id === 'sliderHandle') return;
-            state.isPanning = true;
-            state.startX = e.clientX - state.panX;
-            state.startY = e.clientY - state.panY;
-            e.preventDefault();
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (!state.isPanning) return;
-            state.panX = e.clientX - state.startX;
-            state.panY = e.clientY - state.startY;
-            applyTransform();
-        });
-
-        window.addEventListener('mouseup', () => {
-            state.isPanning = false;
-        });
-
-        // Slider logic
-        let isSliding = false;
-
-        document.getElementById('sliderHandle').addEventListener('mousedown', (e) => {
-            isSliding = true;
-            e.stopPropagation();
-            e.preventDefault();
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (!isSliding) return;
-            const rect = sliderMode.getBoundingClientRect();
-            let x = e.clientX - rect.left;
-            x = Math.max(0, Math.min(rect.width, x));
-            const pct = (x / rect.width) * 100;
-
-            document.getElementById('sliderHandle').style.left = pct + '%';
-            document.getElementById('originalWrapper').style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
-        });
-
-        window.addEventListener('mouseup', () => {
-            isSliding = false;
-        });
-
-        // Touch support for pan
-        let touchStartX, touchStartY;
-
-        compareContainer.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                state.isPanning = true;
-                touchStartX = e.touches[0].clientX - state.panX;
-                touchStartY = e.touches[0].clientY - state.panY;
+            // ─── Helpers ───
+            function getActiveRect() {
+                if (S.mode === 'sbs') {
+                    // Use the left pane as reference
+                    return document.getElementById('paneLeft').getBoundingClientRect();
+                }
+                return compareContainer.getBoundingClientRect();
             }
-        }, { passive: false });
 
-        compareContainer.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (state.isPanning && e.touches.length === 1) {
-                state.panX = e.touches[0].clientX - touchStartX;
-                state.panY = e.touches[0].clientY - touchStartY;
-                applyTransform();
-            }
-        }, { passive: false });
+            function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 
-        compareContainer.addEventListener('touchend', () => {
-            state.isPanning = false;
-        });
+            // ─── Resize ───
+            window.addEventListener('resize', () => { if (S.imgUpscaled) render(); });
 
-        // Download
-        function downloadResult() {
-            const a = document.createElement('a');
-            a.href = state.upscaledUrl;
-            a.download = 'upscaled_result.png';
-            a.click();
-        }
+            // ─── Download ───
+            window.downloadResult = function () {
+                const a = document.createElement('a');
+                a.href = S.upscaledUrl;
+                a.download = 'upscaled_result.png';
+                a.click();
+            };
 
-        // Keyboard shortcuts
-        window.addEventListener('keydown', (e) => {
-            if (e.key === '1') setMode('sidebyside');
-            if (e.key === '2') setMode('slider');
-            if (e.key === '0') resetZoom();
-            if (e.key === '+' || e.key === '=') {
-                state.zoom = Math.min(state.maxZoom, state.zoom * 1.2);
-                applyTransform();
-            }
-            if (e.key === '-') {
-                state.zoom = Math.max(state.minZoom, state.zoom / 1.2);
-                applyTransform();
-            }
-        });
+            // ─── Keyboard shortcuts ───
+            window.addEventListener('keydown', e => {
+                if (e.key === '1') setMode('sbs');
+                if (e.key === '2') setMode('slider');
+                if (e.key === '0') resetView();
+                if (e.key === '+' || e.key === '=') { S.zoom = clamp(S.zoom * 1.2, 0.1, 30); render(); showZoom(); }
+                if (e.key === '-') { S.zoom = clamp(S.zoom / 1.2, 0.1, 30); render(); showZoom(); }
+            });
+
+        })();
     </script>
 
 </body>
+
 </html>
