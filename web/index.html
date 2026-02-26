@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImageUpscaler — AI Super Resolution</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a28;
+            --bg-hover: #22223a;
+            --border: #2a2a40;
+            --border-glow: #6c5ce7;
+            --text-primary: #f0f0f8;
+            --text-secondary: #8888a8;
+            --accent: #6c5ce7;
+            --accent-light: #a29bfe;
+            --accent-glow: rgba(108, 92, 231, 0.3);
+            --success: #00e676;
+            --danger: #ff5252;
+            --gradient-1: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            --gradient-2: linear-gradient(135deg, #0a0a0f 0%, #1a1a28 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background glow effects */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 30% 20%, rgba(108, 92, 231, 0.06) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 80%, rgba(162, 155, 254, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--gradient-1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: rgba(108, 92, 231, 0.1);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            font-size: 12px;
+            color: var(--accent-light);
+            font-weight: 500;
+        }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        /* Drop Zone */
+        .dropzone-wrapper {
+            margin-bottom: 32px;
+        }
+
+        .dropzone {
+            position: relative;
+            border: 2px dashed var(--border);
+            border-radius: 20px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            background: var(--bg-secondary);
+            overflow: hidden;
+        }
+
+        .dropzone::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gradient-1);
+            opacity: 0;
+            transition: opacity 0.4s;
+            border-radius: 18px;
+        }
+
+        .dropzone:hover, .dropzone.drag-over {
+            border-color: var(--accent);
+            box-shadow: 0 0 40px var(--accent-glow);
+        }
+
+        .dropzone:hover::before, .dropzone.drag-over::before {
+            opacity: 0.05;
+        }
+
+        .dropzone-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .dropzone-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+            display: block;
+            filter: grayscale(0.3);
+            transition: filter 0.3s;
+        }
+
+        .dropzone:hover .dropzone-icon {
+            filter: grayscale(0);
+        }
+
+        .dropzone-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .dropzone-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .dropzone-subtitle span {
+            color: var(--accent-light);
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* Hidden file input */
+        #fileInput {
+            display: none;
+        }
+
+        /* Processing State */
+        .processing {
+            display: none;
+            text-align: center;
+            padding: 48px;
+        }
+
+        .processing.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 56px;
+            height: 56px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .processing-text {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        /* Controls Bar */
+        .controls-bar {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 14px 20px;
+            background: var(--bg-card);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+        }
+
+        .controls-bar.active {
+            display: flex;
+        }
+
+        .info-pills {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            background: rgba(108, 92, 231, 0.1);
+            border: 1px solid rgba(108, 92, 231, 0.2);
+            color: var(--accent-light);
+        }
+
+        .pill.success {
+            background: rgba(0, 230, 118, 0.1);
+            border-color: rgba(0, 230, 118, 0.2);
+            color: var(--success);
+        }
+
+        .control-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 18px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent);
+        }
+
+        .btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            border: none;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 4px 20px var(--accent-glow);
+            transform: translateY(-1px);
+        }
+
+        /* Compare Container */
+        .compare-container {
+            display: none;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .compare-container.active {
+            display: block;
+        }
+
+        /* Side by Side Mode */
+        .side-by-side {
+            display: flex;
+            height: 70vh;
+            min-height: 450px;
+        }
+
+        .side-by-side .pane {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+        }
+
+        .side-by-side .pane:active {
+            cursor: grabbing;
+        }
+
+        .side-by-side .pane:first-child {
+            border-right: 1px solid var(--border);
+        }
+
+        .pane-label {
+            position: absolute;
+            top: 14px;
+            z-index: 10;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(12px);
+            pointer-events: none;
+        }
+
+        .pane-label.original {
+            left: 14px;
+            background: rgba(255, 82, 82, 0.2);
+            border: 1px solid rgba(255, 82, 82, 0.3);
+            color: #ff8a80;
+        }
+
+        .pane-label.upscaled {
+            right: 14px;
+            background: rgba(0, 230, 118, 0.2);
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            color: #69f0ae;
+        }
+
+        .pane img {
+            position: absolute;
+            transform-origin: 0 0;
+            image-rendering: auto;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        /* Slider Mode */
+        .slider-mode {
+            display: none;
+            position: relative;
+            height: 70vh;
+            min-height: 450px;
+            overflow: hidden;
+            cursor: grab;
+        }
+
+        .slider-mode:active {
+            cursor: grabbing;
+        }
+
+        .slider-mode .slider-img-wrapper {
+            position: absolute;
+            inset: 0;
+        }
+
+        .slider-mode img {
+            position: absolute;
+            transform-origin: 0 0;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .slider-mode .original-wrapper {
+            z-index: 1;
+            clip-path: inset(0 50% 0 0);
+        }
+
+        .slider-mode .upscaled-wrapper {
+            z-index: 0;
+        }
+
+        .slider-handle {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 3px;
+            background: #fff;
+            z-index: 5;
+            cursor: ew-resize;
+            box-shadow: 0 0 12px rgba(0,0,0,0.5);
+        }
+
+        .slider-handle::after {
+            content: '⟨ ⟩';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-size: 14px;
+            font-weight: 700;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+        }
+
+        .slider-mode .pane-label.original {
+            left: 14px;
+            z-index: 3;
+        }
+
+        .slider-mode .pane-label.upscaled {
+            right: 14px;
+            z-index: 3;
+        }
+
+        /* Zoom indicator */
+        .zoom-indicator {
+            position: absolute;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            padding: 6px 16px;
+            border-radius: 8px;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        /* Download Button */
+        .download-section {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .download-section.active {
+            display: block;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 16px; }
+            .side-by-side { flex-direction: column; height: auto; }
+            .side-by-side .pane { height: 40vh; }
+            .side-by-side .pane:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+            .controls-bar { flex-direction: column; gap: 12px; }
+            .header { padding: 12px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🔬</div>
+            <span class="logo-text">ImageUpscaler</span>
+        </div>
+        <div class="header-badge">AI Super Resolution</div>
+    </header>
+
+    <div class="container">
+
+        <!-- Drop Zone -->
+        <div class="dropzone-wrapper" id="dropzoneWrapper">
+            <div class="dropzone" id="dropzone">
+                <div class="dropzone-content">
+                    <span class="dropzone-icon">📸</span>
+                    <div class="dropzone-title">Drop your image here</div>
+                    <div class="dropzone-subtitle">or <span onclick="document.getElementById('fileInput').click()">browse files</span> — PNG, JPG, WEBP</div>
+                </div>
+            </div>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <!-- Processing -->
+        <div class="processing" id="processing">
+            <div class="spinner"></div>
+            <div class="processing-text">Upscaling your image with AI...</div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-bar" id="controlsBar">
+            <div class="info-pills" id="infoPills"></div>
+            <div class="control-btns">
+                <button class="btn active" id="btnSideBySide" onclick="setMode('sidebyside')">◧ Side by Side</button>
+                <button class="btn" id="btnSlider" onclick="setMode('slider')">⇔ Slider</button>
+                <button class="btn" id="btnResetZoom" onclick="resetZoom()">⊕ Reset Zoom</button>
+                <button class="btn btn-primary" id="btnDownload" onclick="downloadResult()">↓ Download</button>
+                <button class="btn" onclick="uploadNew()">+ New</button>
+            </div>
+        </div>
+
+        <!-- Compare Container -->
+        <div class="compare-container" id="compareContainer">
+
+            <!-- Side by Side -->
+            <div class="side-by-side" id="sideBySide">
+                <div class="pane" id="paneLeft">
+                    <span class="pane-label original">Original</span>
+                    <img id="imgOriginalSbs" draggable="false">
+                </div>
+                <div class="pane" id="paneRight">
+                    <span class="pane-label upscaled">Upscaled</span>
+                    <img id="imgUpscaledSbs" draggable="false">
+                </div>
+            </div>
+
+            <!-- Slider -->
+            <div class="slider-mode" id="sliderMode">
+                <span class="pane-label original">Original</span>
+                <span class="pane-label upscaled">Upscaled</span>
+                <div class="slider-img-wrapper original-wrapper" id="originalWrapper">
+                    <img id="imgOriginalSlider" draggable="false">
+                </div>
+                <div class="slider-img-wrapper upscaled-wrapper" id="upscaledWrapper">
+                    <img id="imgUpscaledSlider" draggable="false">
+                </div>
+                <div class="slider-handle" id="sliderHandle"></div>
+            </div>
+
+            <div class="zoom-indicator" id="zoomIndicator">100%</div>
+        </div>
+
+        <!-- Download -->
+        <div class="download-section" id="downloadSection"></div>
+    </div>
+
+    <footer class="footer">
+        Built with PyTorch · AI-Powered Super Resolution
+    </footer>
+
+    <script>
+        // State
+        let state = {
+            mode: 'sidebyside',
+            zoom: 1,
+            panX: 0,
+            panY: 0,
+            isPanning: false,
+            startX: 0,
+            startY: 0,
+            originalUrl: '',
+            upscaledUrl: '',
+            minZoom: 0.1,
+            maxZoom: 20
+        };
+
+        // DOM
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const processing = document.getElementById('processing');
+        const dropzoneWrapper = document.getElementById('dropzoneWrapper');
+        const controlsBar = document.getElementById('controlsBar');
+        const compareContainer = document.getElementById('compareContainer');
+        const sideBySide = document.getElementById('sideBySide');
+        const sliderMode = document.getElementById('sliderMode');
+        const zoomIndicator = document.getElementById('zoomIndicator');
+
+        // Drag & Drop
+        ['dragenter', 'dragover'].forEach(e => {
+            dropzone.addEventListener(e, (ev) => {
+                ev.preventDefault();
+                dropzone.classList.add('drag-over');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(e => {
+            dropzone.addEventListener(e, (ev) => {
+                ev.preventDefault();
+                dropzone.classList.remove('drag-over');
+            });
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                uploadImage(file);
+            }
+        });
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) uploadImage(e.target.files[0]);
+        });
+
+        // Upload & Process
+        async function uploadImage(file) {
+            dropzoneWrapper.style.display = 'none';
+            processing.classList.add('active');
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const res = await fetch('/upscale', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.error) {
+                    alert(data.error);
+                    uploadNew();
+                    return;
+                }
+
+                state.originalUrl = data.original;
+                state.upscaledUrl = data.upscaled;
+
+                // Set images
+                document.getElementById('imgOriginalSbs').src = data.original;
+                document.getElementById('imgUpscaledSbs').src = data.upscaled;
+                document.getElementById('imgOriginalSlider').src = data.original;
+                document.getElementById('imgUpscaledSlider').src = data.upscaled;
+
+                // Info pills
+                document.getElementById('infoPills').innerHTML = `
+                    <div class="pill">Input: ${data.original_size}</div>
+                    <div class="pill success">Output: ${data.upscaled_size}</div>
+                    <div class="pill">${data.scale}x Upscale</div>
+                `;
+
+                // Wait for images to load
+                await Promise.all([
+                    loadImg('imgOriginalSbs'),
+                    loadImg('imgUpscaledSbs'),
+                    loadImg('imgOriginalSlider'),
+                    loadImg('imgUpscaledSlider')
+                ]);
+
+                processing.classList.remove('active');
+                controlsBar.classList.add('active');
+                compareContainer.classList.add('active');
+
+                resetZoom();
+                setMode('sidebyside');
+
+            } catch (err) {
+                alert('Error processing image: ' + err.message);
+                uploadNew();
+            }
+        }
+
+        function loadImg(id) {
+            return new Promise((resolve) => {
+                const img = document.getElementById(id);
+                if (img.complete) resolve();
+                else img.onload = resolve;
+            });
+        }
+
+        function uploadNew() {
+            processing.classList.remove('active');
+            dropzoneWrapper.style.display = 'block';
+            controlsBar.classList.remove('active');
+            compareContainer.classList.remove('active');
+            fileInput.value = '';
+            resetZoom();
+        }
+
+        // View Modes
+        function setMode(mode) {
+            state.mode = mode;
+
+            document.getElementById('btnSideBySide').classList.toggle('active', mode === 'sidebyside');
+            document.getElementById('btnSlider').classList.toggle('active', mode === 'slider');
+
+            sideBySide.style.display = mode === 'sidebyside' ? 'flex' : 'none';
+            sliderMode.style.display = mode === 'slider' ? 'block' : 'none';
+
+            resetZoom();
+        }
+
+        // Zoom & Pan
+        function applyTransform() {
+            const transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
+            const imgs = document.querySelectorAll('.pane img, .slider-mode img');
+            imgs.forEach(img => img.style.transform = transform);
+
+            const pct = Math.round(state.zoom * 100);
+            zoomIndicator.textContent = `${pct}%`;
+            zoomIndicator.style.opacity = 1;
+            clearTimeout(state.zoomFadeTimer);
+            state.zoomFadeTimer = setTimeout(() => {
+                zoomIndicator.style.opacity = 0;
+            }, 1500);
+        }
+
+        function resetZoom() {
+            const container = state.mode === 'sidebyside'
+                ? document.getElementById('paneLeft')
+                : sliderMode;
+
+            const img = state.mode === 'sidebyside'
+                ? document.getElementById('imgUpscaledSbs')
+                : document.getElementById('imgUpscaledSlider');
+
+            if (!img.naturalWidth) {
+                state.zoom = 1;
+                state.panX = 0;
+                state.panY = 0;
+                applyTransform();
+                return;
+            }
+
+            const cw = container.clientWidth;
+            const ch = container.clientHeight;
+            const iw = img.naturalWidth;
+            const ih = img.naturalHeight;
+
+            state.zoom = Math.min(cw / iw, ch / ih, 1);
+            state.panX = (cw - iw * state.zoom) / 2;
+            state.panY = (ch - ih * state.zoom) / 2;
+
+            applyTransform();
+        }
+
+        // Mouse wheel zoom
+        compareContainer.addEventListener('wheel', (e) => {
+            e.preventDefault();
+
+            const rect = compareContainer.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+
+            const imgX = (mx - state.panX) / state.zoom;
+            const imgY = (my - state.panY) / state.zoom;
+
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            let newZoom = state.zoom * delta;
+            newZoom = Math.max(state.minZoom, Math.min(state.maxZoom, newZoom));
+
+            state.panX = mx - imgX * newZoom;
+            state.panY = my - imgY * newZoom;
+            state.zoom = newZoom;
+
+            applyTransform();
+        }, { passive: false });
+
+        // Pan (mouse)
+        compareContainer.addEventListener('mousedown', (e) => {
+            if (e.target.id === 'sliderHandle') return;
+            state.isPanning = true;
+            state.startX = e.clientX - state.panX;
+            state.startY = e.clientY - state.panY;
+            e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!state.isPanning) return;
+            state.panX = e.clientX - state.startX;
+            state.panY = e.clientY - state.startY;
+            applyTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            state.isPanning = false;
+        });
+
+        // Slider logic
+        let isSliding = false;
+
+        document.getElementById('sliderHandle').addEventListener('mousedown', (e) => {
+            isSliding = true;
+            e.stopPropagation();
+            e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isSliding) return;
+            const rect = sliderMode.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            x = Math.max(0, Math.min(rect.width, x));
+            const pct = (x / rect.width) * 100;
+
+            document.getElementById('sliderHandle').style.left = pct + '%';
+            document.getElementById('originalWrapper').style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
+        });
+
+        window.addEventListener('mouseup', () => {
+            isSliding = false;
+        });
+
+        // Touch support for pan
+        let touchStartX, touchStartY;
+
+        compareContainer.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                state.isPanning = true;
+                touchStartX = e.touches[0].clientX - state.panX;
+                touchStartY = e.touches[0].clientY - state.panY;
+            }
+        }, { passive: false });
+
+        compareContainer.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (state.isPanning && e.touches.length === 1) {
+                state.panX = e.touches[0].clientX - touchStartX;
+                state.panY = e.touches[0].clientY - touchStartY;
+                applyTransform();
+            }
+        }, { passive: false });
+
+        compareContainer.addEventListener('touchend', () => {
+            state.isPanning = false;
+        });
+
+        // Download
+        function downloadResult() {
+            const a = document.createElement('a');
+            a.href = state.upscaledUrl;
+            a.download = 'upscaled_result.png';
+            a.click();
+        }
+
+        // Keyboard shortcuts
+        window.addEventListener('keydown', (e) => {
+            if (e.key === '1') setMode('sidebyside');
+            if (e.key === '2') setMode('slider');
+            if (e.key === '0') resetZoom();
+            if (e.key === '+' || e.key === '=') {
+                state.zoom = Math.min(state.maxZoom, state.zoom * 1.2);
+                applyTransform();
+            }
+            if (e.key === '-') {
+                state.zoom = Math.max(state.minZoom, state.zoom / 1.2);
+                applyTransform();
+            }
+        });
+    </script>
+
+</body>
+</html>

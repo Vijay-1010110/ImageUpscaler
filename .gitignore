@@ -1,6 +1,7 @@
 # Raw Data & Training Images
 data/hr_images/
 data/lr_images/
+web/uploads/
 
 # Checkpoints & Model Weights
 checkpoints/
