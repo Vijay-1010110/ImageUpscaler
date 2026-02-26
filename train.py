@@ -11,61 +11,67 @@ from engine.trainer import Trainer
 from engine.checkpoint import save_checkpoint, load_latest_checkpoint
 from utils.logger import create_writer
 
-with open("configs/config.yaml") as f:
-    config = yaml.safe_load(f)
 
-device = get_device()
+def main():
+    with open("configs/config.yaml") as f:
+        config = yaml.safe_load(f)
 
-dataset = SRDataset(
-    hr_folder="data/hr_images",
-    patch_size=config["patch_size"],
-    scale=config["scale"]
-)
+    device = get_device()
 
-loader = DataLoader(
-    dataset,
-    batch_size=config["batch_size"],
-    shuffle=True,
-    num_workers=config["num_workers"]
-)
+    dataset = SRDataset(
+        hr_folder="data/hr_images",
+        patch_size=config["patch_size"],
+        scale=config["scale"]
+    )
 
-model = build_model(config).to(device)
-optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
-criterion = nn.L1Loss()
+    loader = DataLoader(
+        dataset,
+        batch_size=config["batch_size"],
+        shuffle=True,
+        num_workers=config["num_workers"]
+    )
 
-writer = create_writer()
+    model = build_model(config).to(device)
+    optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
+    criterion = nn.L1Loss()
 
-trainer = Trainer(
-    model,
-    optimizer,
-    criterion,
-    device,
-    config["mixed_precision"],
-    writer
-)
+    writer = create_writer()
 
-start_epoch = load_latest_checkpoint(
-    model, optimizer, "checkpoints"
-)
+    trainer = Trainer(
+        model,
+        optimizer,
+        criterion,
+        device,
+        config["mixed_precision"],
+        writer
+    )
 
-try:
-    for epoch in range(start_epoch, config["epochs"]):
-        loss, avg_psnr = trainer.train_one_epoch(loader, epoch)
+    start_epoch = load_latest_checkpoint(
+        model, optimizer, "checkpoints"
+    )
 
-        print(f"Epoch {epoch} | Loss {loss:.4f} | PSNR {avg_psnr:.2f}")
+    try:
+        for epoch in range(start_epoch, config["epochs"]):
+            loss, avg_psnr = trainer.train_one_epoch(loader, epoch)
 
+            print(f"Epoch {epoch} | Loss {loss:.4f} | PSNR {avg_psnr:.2f}")
+
+            save_checkpoint(
+                model,
+                optimizer,
+                epoch,
+                f"checkpoints/sr_epoch_{epoch}.pth"
+            )
+
+    except KeyboardInterrupt:
+        print("Training interrupted. Saving checkpoint...")
         save_checkpoint(
             model,
             optimizer,
             epoch,
-            f"checkpoints/sr_epoch_{epoch}.pth"
+            f"checkpoints/interrupted_epoch_{epoch}.pth"
         )
 
-except KeyboardInterrupt:
-    print("Training interrupted. Saving checkpoint...")
-    save_checkpoint(
-        model,
-        optimizer,
-        epoch,
-        f"checkpoints/interrupted_epoch_{epoch}.pth"
-    )
+
+if __name__ == "__main__":
+    main()
