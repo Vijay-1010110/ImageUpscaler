@@ -33,7 +33,21 @@ def main():
 
     model = build_model(config).to(device)
     optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
-    criterion = nn.L1Loss()
+
+    # Loss function
+    if config.get("use_perceptual_loss", False):
+        from utils.losses import CombinedLoss
+        criterion = CombinedLoss(
+            perceptual_weight=config.get("perceptual_weight", 0.006)
+        ).to(device)
+        print("Using: L1 + VGG Perceptual Loss")
+    else:
+        criterion = nn.L1Loss()
+        print("Using: L1 Loss only")
+
+    # Print model info
+    params = sum(p.numel() for p in model.parameters()) / 1e6
+    print(f"Model: {config['model_name']} | {params:.2f}M parameters")
 
     writer = create_writer()
 

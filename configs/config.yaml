@@ -1,12 +1,16 @@
 model_name: residual_sr
 scale: 2
-num_res_blocks: 8
-channels: 64
+num_res_blocks: 16
+channels: 128
 
 patch_size: 128
-batch_size: 8
+batch_size: 16
 epochs: 200
 learning_rate: 0.0001
 
 mixed_precision: true
 num_workers: 2
+
+# Loss config
+use_perceptual_loss: true
+perceptual_weight: 0.006

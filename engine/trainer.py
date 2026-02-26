@@ -1,5 +1,5 @@
 import torch
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast, GradScaler
 from tqdm import tqdm
 from utils.metrics import psnr
 from utils.system_monitor import get_system_metrics
@@ -13,7 +13,7 @@ class Trainer:
         self.criterion = criterion
         self.device = device
         self.mixed_precision = mixed_precision
-        self.scaler = GradScaler(enabled=mixed_precision)
+        self.scaler = GradScaler('cuda', enabled=mixed_precision)
         self.writer = writer
 
     def train_one_epoch(self, loader, epoch):
@@ -27,7 +27,7 @@ class Trainer:
 
             self.optimizer.zero_grad()
 
-            with autocast(enabled=self.mixed_precision):
+            with autocast('cuda', enabled=self.mixed_precision):
                 sr = self.model(lr)
                 loss = self.criterion(sr, hr)
 

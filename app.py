@@ -28,7 +28,7 @@ if files:
         m = re.search(r'(\d+)', fname)
         return int(m.group(1)) if m else -1
     files.sort(key=epoch_num)
-    latest = files[0]
+    latest = files[-1]
     path = os.path.join(checkpoint_dir, latest)
     checkpoint = torch.load(path, map_location=device, weights_only=False)
     model.load_state_dict(checkpoint["model"])

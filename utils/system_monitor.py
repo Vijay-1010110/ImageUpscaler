@@ -21,16 +21,16 @@ def get_system_metrics():
         # GPU memory
         allocated = torch.cuda.memory_allocated(gpu_idx) / (1024 ** 3)
         reserved = torch.cuda.memory_reserved(gpu_idx) / (1024 ** 3)
-        total = torch.cuda.get_device_properties(gpu_idx).total_mem / (1024 ** 3)
+        total = torch.cuda.get_device_properties(gpu_idx).total_memory / (1024 ** 3)
 
         metrics["GPU/Memory_allocated_GB"] = allocated
         metrics["GPU/Memory_reserved_GB"] = reserved
         metrics["GPU/Memory_total_GB"] = total
         metrics["GPU/Memory_percent"] = (allocated / total) * 100
 
-        # GPU utilization (if pynvml available)
+        # GPU utilization (requires nvidia-ml-py)
         try:
-            import pynvml
+            import pynvml  # provided by nvidia-ml-py
             pynvml.nvmlInit()
             handle = pynvml.nvmlDeviceGetHandleByIndex(gpu_idx)
             util = pynvml.nvmlDeviceGetUtilizationRates(handle)
