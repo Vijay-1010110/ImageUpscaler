@@ -89,9 +89,9 @@ def main():
             print(f"Epoch {epoch} | Loss {loss:.4f} | PSNR {avg_psnr:.2f}")
 
             is_last = (epoch == config["epochs"] - 1)
-            is_interval = ((epoch + 1) % 10 == 0)
+            is_interval = ((epoch + 1) % 5 == 0)
 
-            # Save checkpoint every 10 epochs or on last epoch
+            # Save checkpoint every 5 epochs or on last epoch
             if is_interval or is_last:
                 save_checkpoint(
                     model, optimizer, epoch,
@@ -99,11 +99,11 @@ def main():
                 )
                 print(f"📌 Checkpoint saved: epoch {epoch}")
 
-                # Auto-cleanup: keep only last 2 checkpoints
+                # Auto-cleanup: keep only last 10 checkpoints
                 import re as _re
                 ckpt_files = [f for f in os.listdir("checkpoints") if f.endswith(".pth")]
                 ckpt_files.sort(key=lambda f: int(_re.search(r'(\d+)', f).group(1)))
-                for old in ckpt_files[:-2]:
+                for old in ckpt_files[:-10]:
                     os.remove(f"checkpoints/{old}")
 
             # Kaggle safety backup every 50 epochs
