@@ -3,8 +3,8 @@ scale: 2
 num_res_blocks: 16
 channels: 128
 
-patch_size: 128
-batch_size: 16
+patch_size: 192
+batch_size: 32
 epochs: 200
 learning_rate: 0.0001
 
