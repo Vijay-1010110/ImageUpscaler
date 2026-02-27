@@ -48,13 +48,14 @@ python app.py
 
 | Setting | Local (GTX 1650, 4GB) | Kaggle (T4 x2, 30GB) |
 |---|---|---|
-| Channels | 128 | 256 |
-| Res Blocks | 16 | 32 |
-| Batch Size | 32 | 64 |
+| Channels | 128 | 192 |
+| Res Blocks | 16 | 24 |
+| Batch Size | 32 | 48 |
 | Patch Size | 192 | 256 |
-| Epochs | 200 | 300 |
+| Epochs | 200 | 250 |
+| Perceptual Weight | 0.006 | 0.01 |
 | Multi-GPU | No | Yes (DataParallel) |
-| Model Size | ~4.7M | ~18.9M params |
+| Model Size | ~4.7M | ~10-12M params |
 
 ## Troubleshooting
 
