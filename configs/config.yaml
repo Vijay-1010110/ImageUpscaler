@@ -1,7 +1,7 @@
 model_name: residual_sr
 scale: 2
-num_res_blocks: 16
-channels: 128
+num_res_blocks: 24
+channels: 192
 
 patch_size: 192
 batch_size: 32
@@ -13,4 +13,4 @@ num_workers: 2
 
 # Loss config
 use_perceptual_loss: true
-perceptual_weight: 0.006
+perceptual_weight: 0.01

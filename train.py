@@ -88,28 +88,35 @@ def main():
 
             print(f"Epoch {epoch} | Loss {loss:.4f} | PSNR {avg_psnr:.2f}")
 
-            save_checkpoint(
-                model,
-                optimizer,
-                epoch,
-                f"checkpoints/sr_epoch_{epoch}.pth"
-            )
+            is_last = (epoch == config["epochs"] - 1)
+            is_interval = ((epoch + 1) % 10 == 0)
 
-            # Auto-cleanup: keep only last 3 checkpoints to save disk space
-            import re as _re
-            ckpt_files = [f for f in os.listdir("checkpoints") if f.endswith(".pth")]
-            ckpt_files.sort(key=lambda f: int(_re.search(r'(\d+)', f).group(1)))
-            for old in ckpt_files[:-3]:
-                os.remove(f"checkpoints/{old}")
+            # Save checkpoint every 10 epochs or on last epoch
+            if is_interval or is_last:
+                save_checkpoint(
+                    model, optimizer, epoch,
+                    f"checkpoints/sr_epoch_{epoch}.pth"
+                )
+                print(f"📌 Checkpoint saved: epoch {epoch}")
+
+                # Auto-cleanup: keep only last 2 checkpoints
+                import re as _re
+                ckpt_files = [f for f in os.listdir("checkpoints") if f.endswith(".pth")]
+                ckpt_files.sort(key=lambda f: int(_re.search(r'(\d+)', f).group(1)))
+                for old in ckpt_files[:-2]:
+                    os.remove(f"checkpoints/{old}")
 
             # Kaggle safety backup every 50 epochs
-            if (epoch + 1) % 50 == 0:
+            if (epoch + 1) % 50 == 0 or is_last:
                 import shutil
+                save_checkpoint(
+                    model, optimizer, epoch,
+                    f"checkpoints/sr_epoch_{epoch}.pth"
+                )
                 backup_dir = "/kaggle/working/backup"
                 os.makedirs(backup_dir, exist_ok=True)
                 src = f"checkpoints/sr_epoch_{epoch}.pth"
                 if os.path.exists(src):
-                    # Remove old backups first
                     for bf in os.listdir(backup_dir):
                         os.remove(f"{backup_dir}/{bf}")
                     shutil.copy2(src, f"{backup_dir}/sr_epoch_{epoch}.pth")
@@ -118,9 +125,7 @@ def main():
     except KeyboardInterrupt:
         print("Training interrupted. Saving checkpoint...")
         save_checkpoint(
-            model,
-            optimizer,
-            epoch,
+            model, optimizer, epoch,
             f"checkpoints/interrupted_epoch_{epoch}.pth"
         )
 
