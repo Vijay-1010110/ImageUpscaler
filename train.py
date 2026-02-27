@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import torch.optim as optim
+import argparse
 
 from models.model_factory import build_model
 from data.dataset import SRDataset
@@ -13,7 +14,12 @@ from utils.logger import create_writer
 
 
 def main():
-    with open("configs/config.yaml") as f:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", default="configs/config.yaml",
+                        help="Path to config file")
+    args = parser.parse_args()
+
+    with open(args.config) as f:
         config = yaml.safe_load(f)
 
     device = get_device()
@@ -28,10 +34,20 @@ def main():
         dataset,
         batch_size=config["batch_size"],
         shuffle=True,
-        num_workers=config["num_workers"]
+        num_workers=config["num_workers"],
+        pin_memory=True
     )
 
     model = build_model(config).to(device)
+
+    # Multi-GPU support
+    if config.get("multi_gpu", False) and torch.cuda.device_count() > 1:
+        num_gpus = torch.cuda.device_count()
+        model = nn.DataParallel(model)
+        print(f"Using {num_gpus} GPUs via DataParallel")
+    else:
+        print(f"Using single device: {device}")
+
     optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
 
     # Loss function
@@ -46,7 +62,8 @@ def main():
         print("Using: L1 Loss only")
 
     # Print model info
-    params = sum(p.numel() for p in model.parameters()) / 1e6
+    real_model = model.module if hasattr(model, "module") else model
+    params = sum(p.numel() for p in real_model.parameters()) / 1e6
     print(f"Model: {config['model_name']} | {params:.2f}M parameters")
 
     writer = create_writer()
