@@ -94,6 +94,17 @@ def main():
                 f"checkpoints/sr_epoch_{epoch}.pth"
             )
 
+            # Kaggle safety backup every 50 epochs
+            if (epoch + 1) % 50 == 0:
+                import shutil
+                backup_dir = "/kaggle/working/backup"
+                os.makedirs(backup_dir, exist_ok=True)
+                src = f"checkpoints/sr_epoch_{epoch}.pth"
+                dst = f"{backup_dir}/sr_epoch_{epoch}.pth"
+                if os.path.exists(src):
+                    shutil.copy2(src, dst)
+                    print(f"💾 Backup saved: {dst}")
+
     except KeyboardInterrupt:
         print("Training interrupted. Saving checkpoint...")
         save_checkpoint(
