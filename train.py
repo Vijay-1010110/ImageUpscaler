@@ -95,16 +95,25 @@ def main():
                 f"checkpoints/sr_epoch_{epoch}.pth"
             )
 
+            # Auto-cleanup: keep only last 3 checkpoints to save disk space
+            import re as _re
+            ckpt_files = [f for f in os.listdir("checkpoints") if f.endswith(".pth")]
+            ckpt_files.sort(key=lambda f: int(_re.search(r'(\d+)', f).group(1)))
+            for old in ckpt_files[:-3]:
+                os.remove(f"checkpoints/{old}")
+
             # Kaggle safety backup every 50 epochs
             if (epoch + 1) % 50 == 0:
                 import shutil
                 backup_dir = "/kaggle/working/backup"
                 os.makedirs(backup_dir, exist_ok=True)
                 src = f"checkpoints/sr_epoch_{epoch}.pth"
-                dst = f"{backup_dir}/sr_epoch_{epoch}.pth"
                 if os.path.exists(src):
-                    shutil.copy2(src, dst)
-                    print(f"💾 Backup saved: {dst}")
+                    # Remove old backups first
+                    for bf in os.listdir(backup_dir):
+                        os.remove(f"{backup_dir}/{bf}")
+                    shutil.copy2(src, f"{backup_dir}/sr_epoch_{epoch}.pth")
+                    print(f"💾 Backup saved: {backup_dir}/sr_epoch_{epoch}.pth")
 
     except KeyboardInterrupt:
         print("Training interrupted. Saving checkpoint...")
