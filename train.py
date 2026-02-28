@@ -24,6 +24,7 @@ def main():
         config = yaml.safe_load(f)
 
     device = get_device()
+    version = config.get("model_version", "v0")
 
     dataset = SRDataset(
         hr_folder="data/hr_images",
@@ -65,7 +66,7 @@ def main():
     # Print model info
     real_model = model.module if hasattr(model, "module") else model
     params = sum(p.numel() for p in real_model.parameters()) / 1e6
-    print(f"Model: {config['model_name']} | {params:.2f}M parameters")
+    print(f"Model: {config['model_name']} ({version}) | {params:.2f}M parameters")
 
     writer = create_writer()
 
@@ -93,11 +94,9 @@ def main():
 
             # Save checkpoint every 5 epochs or on last epoch
             if is_interval or is_last:
-                save_checkpoint(
-                    model, optimizer, epoch,
-                    f"checkpoints/sr_epoch_{epoch}.pth"
-                )
-                print(f"📌 Checkpoint saved: epoch {epoch}")
+                ckpt_name = f"checkpoints/{version}_epoch_{epoch}.pth"
+                save_checkpoint(model, optimizer, epoch, ckpt_name)
+                print(f"📌 Checkpoint saved: {ckpt_name}")
 
                 # Auto-cleanup: keep only last 10 checkpoints
                 import re as _re
@@ -109,24 +108,21 @@ def main():
             # Kaggle safety backup every 50 epochs
             if (epoch + 1) % 50 == 0 or is_last:
                 import shutil
-                save_checkpoint(
-                    model, optimizer, epoch,
-                    f"checkpoints/sr_epoch_{epoch}.pth"
-                )
+                ckpt_name = f"checkpoints/{version}_epoch_{epoch}.pth"
+                save_checkpoint(model, optimizer, epoch, ckpt_name)
                 backup_dir = "/kaggle/working/backup"
                 os.makedirs(backup_dir, exist_ok=True)
-                src = f"checkpoints/sr_epoch_{epoch}.pth"
-                if os.path.exists(src):
+                if os.path.exists(ckpt_name):
                     for bf in os.listdir(backup_dir):
                         os.remove(f"{backup_dir}/{bf}")
-                    shutil.copy2(src, f"{backup_dir}/sr_epoch_{epoch}.pth")
-                    print(f"💾 Backup saved: {backup_dir}/sr_epoch_{epoch}.pth")
+                    shutil.copy2(ckpt_name, f"{backup_dir}/{version}_epoch_{epoch}.pth")
+                    print(f"💾 Backup saved: {backup_dir}/{version}_epoch_{epoch}.pth")
 
     except KeyboardInterrupt:
         print("Training interrupted. Saving checkpoint...")
         save_checkpoint(
             model, optimizer, epoch,
-            f"checkpoints/interrupted_epoch_{epoch}.pth"
+            f"checkpoints/{version}_interrupted_epoch_{epoch}.pth"
         )
 
 
