@@ -1,8 +1,10 @@
 import yaml
 import torch
 import torch.nn as nn
+import os
 from torch.utils.data import DataLoader
 import torch.optim as optim
+import argparse
 
 from models.model_factory import build_model
 from data.dataset import SRDataset
@@ -13,10 +15,16 @@ from utils.logger import create_writer
 
 
 def main():
-    with open("configs/config.yaml") as f:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", default="configs/config.yaml",
+                        help="Path to config file")
+    args = parser.parse_args()
+
+    with open(args.config) as f:
         config = yaml.safe_load(f)
 
     device = get_device()
+    version = config.get("model_version", "v0")
 
     dataset = SRDataset(
         hr_folder="data/hr_images",
@@ -28,10 +36,20 @@ def main():
         dataset,
         batch_size=config["batch_size"],
         shuffle=True,
-        num_workers=config["num_workers"]
+        num_workers=config["num_workers"],
+        pin_memory=True
     )
 
     model = build_model(config).to(device)
+
+    # Multi-GPU support
+    if config.get("multi_gpu", False) and torch.cuda.device_count() > 1:
+        num_gpus = torch.cuda.device_count()
+        model = nn.DataParallel(model)
+        print(f"Using {num_gpus} GPUs via DataParallel")
+    else:
+        print(f"Using single device: {device}")
+
     optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
 
     # Loss function
@@ -46,8 +64,9 @@ def main():
         print("Using: L1 Loss only")
 
     # Print model info
-    params = sum(p.numel() for p in model.parameters()) / 1e6
-    print(f"Model: {config['model_name']} | {params:.2f}M parameters")
+    real_model = model.module if hasattr(model, "module") else model
+    params = sum(p.numel() for p in real_model.parameters()) / 1e6
+    print(f"Model: {config['model_name']} ({version}) | {params:.2f}M parameters")
 
     writer = create_writer()
 
@@ -70,20 +89,40 @@ def main():
 
             print(f"Epoch {epoch} | Loss {loss:.4f} | PSNR {avg_psnr:.2f}")
 
-            save_checkpoint(
-                model,
-                optimizer,
-                epoch,
-                f"checkpoints/sr_epoch_{epoch}.pth"
-            )
+            is_last = (epoch == config["epochs"] - 1)
+            is_interval = ((epoch + 1) % 5 == 0)
+
+            # Save checkpoint every 5 epochs or on last epoch
+            if is_interval or is_last:
+                ckpt_name = f"checkpoints/{version}_epoch_{epoch}.pth"
+                save_checkpoint(model, optimizer, epoch, ckpt_name)
+                print(f"📌 Checkpoint saved: {ckpt_name}")
+
+                # Auto-cleanup: keep only last 10 checkpoints
+                import re as _re
+                ckpt_files = [f for f in os.listdir("checkpoints") if f.endswith(".pth")]
+                ckpt_files.sort(key=lambda f: int(_re.search(r'(\d+)', f).group(1)))
+                for old in ckpt_files[:-10]:
+                    os.remove(f"checkpoints/{old}")
+
+            # Kaggle safety backup every 50 epochs
+            if (epoch + 1) % 50 == 0 or is_last:
+                import shutil
+                ckpt_name = f"checkpoints/{version}_epoch_{epoch}.pth"
+                save_checkpoint(model, optimizer, epoch, ckpt_name)
+                backup_dir = "/kaggle/working/backup"
+                os.makedirs(backup_dir, exist_ok=True)
+                if os.path.exists(ckpt_name):
+                    for bf in os.listdir(backup_dir):
+                        os.remove(f"{backup_dir}/{bf}")
+                    shutil.copy2(ckpt_name, f"{backup_dir}/{version}_epoch_{epoch}.pth")
+                    print(f"💾 Backup saved: {backup_dir}/{version}_epoch_{epoch}.pth")
 
     except KeyboardInterrupt:
         print("Training interrupted. Saving checkpoint...")
         save_checkpoint(
-            model,
-            optimizer,
-            epoch,
-            f"checkpoints/interrupted_epoch_{epoch}.pth"
+            model, optimizer, epoch,
+            f"checkpoints/{version}_interrupted_epoch_{epoch}.pth"
         )
 
 
