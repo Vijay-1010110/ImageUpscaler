@@ -14,9 +14,14 @@ class ResidualSR(nn.Module):
             *[ResidualBlock(channels) for _ in range(num_res_blocks)]
         )
 
-        self.exit = nn.Conv2d(channels, 3 * (scale ** 2), 3, 1, 1)
+        # RCAN / EDSR style upsampling block
+        self.upsample = nn.Sequential(
+            nn.Conv2d(channels, channels * (scale ** 2), 3, 1, 1),
+            nn.PixelShuffle(scale)
+        )
 
-        self.pixel_shuffle = nn.PixelShuffle(scale)
+        # Final smoothing convolution to merge the shuffled pixels back into smooth RGB
+        self.exit = nn.Conv2d(channels, 3, 3, 1, 1)
 
     def forward(self, x):
         # Global skip: bicubic upscale of input
@@ -26,7 +31,9 @@ class ResidualSR(nn.Module):
         feat = self.entry(x)
         res = self.res_blocks(feat)
         res = res + feat              # Feature-level skip
+        
+        # Upsampling and smoothing
+        res = self.upsample(res)
         res = self.exit(res)
-        res = self.pixel_shuffle(res)
 
         return bicubic + res          # Image-level skip

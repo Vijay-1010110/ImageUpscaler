@@ -1,4 +1,4 @@
-model_version: v5_skip
+model_version: v6_smooth
 model_name: residual_sr
 scale: 2
 num_res_blocks: 24
