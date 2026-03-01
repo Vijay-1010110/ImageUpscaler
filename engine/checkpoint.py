@@ -31,7 +31,7 @@ def load_latest_checkpoint(model, optimizer, checkpoint_dir):
         return 0
 
     def epoch_num(fname):
-        m = re.search(r'(\d+)', fname)
+        m = re.search(r'_epoch_(\d+)', fname)
         return int(m.group(1)) if m else -1
     files.sort(key=epoch_num)
     latest = files[-1]

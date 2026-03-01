@@ -101,7 +101,7 @@ def main():
                 # Auto-cleanup: keep only last 10 checkpoints
                 import re as _re
                 ckpt_files = [f for f in os.listdir("checkpoints") if f.endswith(".pth")]
-                ckpt_files.sort(key=lambda f: int(_re.search(r'(\d+)', f).group(1)))
+                ckpt_files.sort(key=lambda f: int(_re.search(r'_epoch_(\d+)', f).group(1)))
                 for old in ckpt_files[:-10]:
                     os.remove(f"checkpoints/{old}")
 
